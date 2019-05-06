@@ -24,6 +24,7 @@ struct SampleIO {
 struct Task {
     problem_statement: String,
     sample_ios: Vec<SampleIO>,
+    io_style: String,
     lang:   String,
 }
 
@@ -35,11 +36,12 @@ impl Task {
         let sel_lang = Selector::parse(lang).unwrap();;
         let task_statement_root = document.select(&sel_lang).next().unwrap();
 
-        let sample_ios = Task::get_samples(&task_statement_root);
+        let (sample_ios, io_style) = Task::get_samples(&task_statement_root);
 
         Task {
             problem_statement: Task::get_problem_statement(&task_statement_root),
             sample_ios: sample_ios,
+            io_style: io_style,
             lang: lang.to_string(),
         }
     }
@@ -63,7 +65,7 @@ impl Task {
             .replace("</code>", "")
     }
 
-    fn get_samples(html: &ElementRef) -> Vec<SampleIO> {
+    fn get_samples(html: &ElementRef) -> (Vec<SampleIO>, String) {
         let sel_sample = Selector::parse("div.part").unwrap();
         let sel_section = Selector::parse("section").unwrap();
         let sel_pre = Selector::parse("pre").unwrap();
@@ -75,6 +77,7 @@ impl Task {
             .map(|item| item.inner_html())
             .collect();
 
+        let io_style = &samples[0].replace("<var>", "").replace("</var>", "");
         let mut iter = samples[1..].iter();
 
         let mut io_samples = Vec::new();
@@ -90,7 +93,7 @@ impl Task {
             }
         }
 
-        io_samples
+        (io_samples, io_style.to_string())
     }
 }
 
@@ -198,6 +201,7 @@ fn main() {
     verbose.debug(&format!("- langurage info : {}\n", task.lang));
 
     verbose.output(&format!("===== problem =====\n{}\n", task.problem_statement));
+    verbose.output(&format!("==== io style ====\n{}\n", task.io_style));
 
     for (i, sample) in task.sample_ios.iter().enumerate() {
         verbose.output(&format!("=== sample{:<02} ===\n", i));
