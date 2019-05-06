@@ -31,7 +31,7 @@ impl Task {
     fn new(html_body: String, lang: String) -> Task {
         let document = Html::parse_document(&html_body);
         let lang = &format!("span.lang-{}", lang);
-        /* let sel_lang = Selector::parse(&format!("span.lang-{}", lang)).unwrap(); */
+
         let sel_lang = Selector::parse(lang).unwrap();;
         let task_statement_root = document.select(&sel_lang).next().unwrap();
 
@@ -72,7 +72,6 @@ impl Task {
             .select(&sel_sample)
             .flat_map(|item| item.select(&sel_section))
             .flat_map(|item| item.select(&sel_pre))
-            /* .flat_map(|item| item.select(&sel_presample)) */
             .map(|item| item.inner_html())
             .collect();
 
@@ -218,13 +217,11 @@ fn main() {
         let result_str = String::from_utf8(output.stdout).unwrap();
         if result_str == sample.output
         {
-            /* println!("passed"); */
-            verbose.output(&format!("passed!"));
+            verbose.output(&format!("passed!\n"));
         }
         else
         {
-            verbose.output(&format!("failed"));
-            /* println!("faild"); */
+            verbose.output(&format!("failed\n"));
             verbose.output(&format!("correct answer is\n{}", sample.output));
             verbose.output(&format!("your answer is \n{}", result_str));
             exit_code += 1;
