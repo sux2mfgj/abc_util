@@ -1,0 +1,36 @@
+name: abc_util
+version: "0.1"
+author: Shunsuke Mie <sux2mfgj@gmail.com>
+about: a util command line tool for ABC.
+args:
+    - number:
+        short: n
+        long: number
+        required: true
+        takes_value: true
+        help: Sets a number of the ABC like 88, 125, etc.
+    - level:
+        short: l
+        long: level
+        required: true
+        takes_value: true
+        possible_values:
+            - a
+            - b
+            - c
+            - d
+        help: Sets a level of the ABC.
+    - exec:
+        short: e
+        long: exec
+        value_name: FILE
+        help: Sets a execution file with a absolute or relative path. (e.g ./a.out)
+    - verbose:
+        short: v
+        multiple: true
+        help: Sets the level of verbosity
+    - statement:
+        short: s
+        long: statement
+        help: when you set this option, this program just shows the problem statment and exit.
+
