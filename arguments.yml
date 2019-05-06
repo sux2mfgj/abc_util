@@ -29,8 +29,8 @@ args:
         short: v
         multiple: true
         help: Sets the level of verbosity
-    - statement:
-        short: s
-        long: statement
-        help: when you set this option, this program just shows the problem statment and exit.
+    - test:
+        short: t
+        long: test
+        help: run the program with sample input
 

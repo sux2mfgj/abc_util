@@ -6,10 +6,13 @@ use std::str::FromStr;
 extern crate clap;
 use clap::App;
 
+extern crate openssl_probe;
+
 use reqwest;
 
 use scraper::element_ref::ElementRef;
 use scraper::{Html, Selector};
+
 
 #[derive(Debug)]
 struct SampleIO {
@@ -176,6 +179,11 @@ fn main() {
     verbose.info(&format!("- execution file : {}\n", cmd));
     verbose.info(&format!("- problem number : {}\n", task_name));
     verbose.info(&format!("- http request url:\n{}\n", url));
+
+    // for openssl
+    // https://crates.io/crates/openssl-probe
+    openssl_probe::init_ssl_cert_env_vars();
+
 
     /*
      *  request HTTP GET to the url
