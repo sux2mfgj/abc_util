@@ -197,10 +197,16 @@ fn main() {
     let task = Task::new(buffer, "ja".to_string());
     verbose.debug(&format!("- langurage info : {}\n", task.lang));
 
-    verbose.output(&format!("- problem        :\n{}\n", task.problem_statement));
+    verbose.output(&format!("===== problem =====\n{}\n", task.problem_statement));
+
+    for (i, sample) in task.sample_ios.iter().enumerate() {
+        verbose.output(&format!("=== sample{:<02} ===\n", i));
+        verbose.output(&format!("* inputs\n{}", sample.input));
+        verbose.output(&format!("* outputs\n{}", sample.output));
+    }
 
     let mut exit_code: i32 = 0;
-    if matches.is_present("statement") {
+    if !matches.is_present("test") {
         std::process::exit(exit_code);
     }
 
