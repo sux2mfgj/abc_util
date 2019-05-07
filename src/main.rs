@@ -1,5 +1,5 @@
-use std::process::{Command, Stdio};
 use std::io::Write;
+use std::process::{Command, Stdio};
 use std::str::FromStr;
 
 #[macro_use]
@@ -13,7 +13,6 @@ use reqwest;
 use scraper::element_ref::ElementRef;
 use scraper::{Html, Selector};
 
-
 #[derive(Debug)]
 struct SampleIO {
     input: String,
@@ -25,7 +24,7 @@ struct Task {
     problem_statement: String,
     sample_ios: Vec<SampleIO>,
     io_style: String,
-    lang:   String,
+    lang: String,
 }
 
 impl Task {
@@ -98,18 +97,15 @@ impl Task {
 }
 
 struct Verbose {
-    level: u64
+    level: u64,
 }
 
 impl Verbose {
     fn new(level: u64) -> Verbose {
-        if level >= 1
-        {
+        if level >= 1 {
             println!("- current verboes level:  {}", level);
         }
-        Verbose{
-            level: level
-        }
+        Verbose { level: level }
     }
 
     fn output(&self, text: &str) {
@@ -117,15 +113,13 @@ impl Verbose {
     }
 
     fn info(&self, text: &str) {
-        if self.level >= 1
-        {
+        if self.level >= 1 {
             print!("{}", text);
         }
     }
 
     fn debug(&self, text: &str) {
-        if self.level >= 2
-        {
+        if self.level >= 2 {
             print!("{}", text);
         }
     }
@@ -147,7 +141,7 @@ impl FromStr for TaskLevels {
             "B" | "b" => Ok(TaskLevels::B),
             "C" | "c" => Ok(TaskLevels::C),
             "D" | "d" => Ok(TaskLevels::D),
-            _ => Err("No match")
+            _ => Err("No match"),
         }
     }
 }
@@ -175,8 +169,9 @@ fn main() {
 
     let task_name = &format!("abc{0:<03}", abc_number.parse::<i32>().unwrap());
     let url = &format!(
-            "https://atcoder.jp/contests/{0}/tasks/{0}_{1}",
-            task_name, task_level);
+        "https://atcoder.jp/contests/{0}/tasks/{0}_{1}",
+        task_name, task_level
+    );
 
     verbose.info(&format!("- execution file : {}\n", cmd));
     verbose.info(&format!("- problem number : {}\n", task_name));
@@ -185,7 +180,6 @@ fn main() {
     // for openssl
     // https://crates.io/crates/openssl-probe
     openssl_probe::init_ssl_cert_env_vars();
-
 
     /*
      *  request HTTP GET to the url
@@ -200,37 +194,43 @@ fn main() {
     let task = Task::new(buffer, "ja".to_string());
     verbose.debug(&format!("- langurage info : {}\n", task.lang));
 
-    verbose.output(&format!("===== problem =====\n{}\n", task.problem_statement));
-    verbose.output(&format!("==== io style ====\n{}\n", task.io_style));
-
-    for (i, sample) in task.sample_ios.iter().enumerate() {
-        verbose.output(&format!("=== sample{:<02} ===\n", i));
-        verbose.output(&format!("* inputs\n{}", sample.input));
-        verbose.output(&format!("* outputs\n{}", sample.output));
-    }
-
     let mut exit_code: i32 = 0;
     if !matches.is_present("test") {
+        verbose.output(&format!(
+            "===== problem =====\n{}\n",
+            task.problem_statement
+        ));
+        verbose.output(&format!("==== io style ====\n{}\n", task.io_style));
+
+        for (i, sample) in task.sample_ios.iter().enumerate() {
+            verbose.output(&format!("=== sample{:<02} ===\n", i));
+            verbose.output(&format!("* inputs\n{}", sample.input));
+            verbose.output(&format!("* outputs\n{}", sample.output));
+        }
+
         std::process::exit(exit_code);
     }
 
     for (i, sample) in task.sample_ios.iter().enumerate() {
-
         verbose.output(&format!("--- sample{:<02} ---\n", i));
 
         let mut process = Command::new(cmd)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .spawn().ok().expect("failed to start the program");
-        process.stdin.as_mut().unwrap().write(sample.input.as_bytes()).unwrap();
+            .spawn()
+            .ok()
+            .expect("failed to start the program");
+        process
+            .stdin
+            .as_mut()
+            .unwrap()
+            .write(sample.input.as_bytes())
+            .unwrap();
         let output = process.wait_with_output().unwrap();
         let result_str = String::from_utf8(output.stdout).unwrap();
-        if result_str == sample.output
-        {
+        if result_str == sample.output {
             verbose.output(&format!("passed!\n"));
-        }
-        else
-        {
+        } else {
             verbose.output(&format!("failed\n"));
             verbose.output(&format!("correct answer is\n{}", sample.output));
             verbose.output(&format!("your answer is \n{}", result_str));
