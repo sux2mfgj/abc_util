@@ -1,147 +1,78 @@
-use std::io::Write;
-use std::process::{Command, Stdio};
-use std::str::FromStr;
+use std::io::{self, BufRead, Write};
 
 #[macro_use]
 extern crate clap;
 use clap::App;
 
-extern crate openssl_probe;
+mod contest;
+mod task;
 
-use reqwest;
+use contest as atcoder;
 
-use scraper::element_ref::ElementRef;
-use scraper::{Html, Selector};
-
-#[derive(Debug)]
-struct SampleIO {
-    input: String,
-    output: String,
-}
-
-#[derive(Debug)]
-struct Task {
-    problem_statement: String,
-    sample_ios: Vec<SampleIO>,
-    io_style: String,
-    lang: String,
-}
-
-impl Task {
-    fn new(html_body: String, lang: String) -> Task {
-        let document = Html::parse_document(&html_body);
-        let lang = &format!("span.lang-{}", lang);
-
-        let sel_lang = Selector::parse(lang).unwrap();;
-        let task_statement_root = document.select(&sel_lang).next().unwrap();
-
-        let (sample_ios, io_style) = Task::get_samples(&task_statement_root);
-
-        Task {
-            problem_statement: Task::get_problem_statement(&task_statement_root),
-            sample_ios: sample_ios,
-            io_style: io_style,
-            lang: lang.to_string(),
-        }
-    }
-
-    fn get_problem_statement(html: &ElementRef) -> String {
-        let selector_div1 = Selector::parse("div.part").unwrap();
-        let selector_p = Selector::parse("p").unwrap();
-
-        let problem_v: Vec<_> = html
-            .select(&selector_div1)
-            .flat_map(|item| item.select(&selector_p))
-            .map(|item| item.inner_html())
-            .collect();
-
-        problem_v
-            .concat()
-            .replace("<var>", "")
-            .replace("</var>", "")
-            .replace("<br>", "")
-            .replace("<code>", "")
-            .replace("</code>", "")
-    }
-
-    fn get_samples(html: &ElementRef) -> (Vec<SampleIO>, String) {
-        let sel_sample = Selector::parse("div.part").unwrap();
-        let sel_section = Selector::parse("section").unwrap();
-        let sel_pre = Selector::parse("pre").unwrap();
-
-        let samples: Vec<_> = html
-            .select(&sel_sample)
-            .flat_map(|item| item.select(&sel_section))
-            .flat_map(|item| item.select(&sel_pre))
-            .map(|item| item.inner_html())
-            .collect();
-
-        let io_style = &samples[0].replace("<var>", "").replace("</var>", "");
-        let mut iter = samples[1..].iter();
-
-        let mut io_samples = Vec::new();
-        while let Some(input) = iter.next() {
-            if let Some(output) = iter.next() {
-                let sample = SampleIO {
-                    input: input.to_string(),
-                    output: output.to_string(),
-                };
-                io_samples.push(sample);
+fn evel_command(contest: &mut atcoder::Contest, command_line: String) -> Result<bool, String> {
+    let command: Vec<_> = command_line.split(' ').collect();
+    match command[0] {
+        "contest_name" | "c" => {
+            if command.len() != 2 {
+                match &contest.name {
+                    Some(name) => {
+                        println!("{}", name);
+                        Ok(true)
+                    }
+                    None => Err(
+                        "contest_name requires a argument.\ne.g. > contest_name abc125".to_string(),
+                    ),
+                }
             } else {
-                assert!(false, "I/Os must be coresponded.");
+                println!("setting...");
+
+                let path = &format!("/contests/{0}/tasks", command[1]);
+                let domain = "atcoder.jp".to_string();
+
+                if let Some(tasks) = contest.set_name_and_get_tasks(&domain, path) {
+                    println!("titles are ");
+                    for task in tasks {
+                        println!("{}", task);
+                    }
+                    contest.name = Some(command[1].to_string());
+                    Ok(true)
+                } else {
+                    Err(format!("the argument `{}` is invalid", command[1]).to_string())
+                }
             }
         }
-
-        (io_samples, io_style.to_string())
-    }
-}
-
-struct Verbose {
-    level: u64,
-}
-
-impl Verbose {
-    fn new(level: u64) -> Verbose {
-        if level >= 1 {
-            println!("- current verboes level:  {}", level);
+        "help" => {
+            assert!(false, "not yet implemented");
+            Err("not yet implemented".to_string())
         }
-        Verbose { level: level }
-    }
-
-    fn output(&self, text: &str) {
-        print!("{}", text);
-    }
-
-    fn info(&self, text: &str) {
-        if self.level >= 1 {
-            print!("{}", text);
-        }
-    }
-
-    fn debug(&self, text: &str) {
-        if self.level >= 2 {
-            print!("{}", text);
-        }
+        "exit" => Ok(false),
+        _ => Err("invalid command".to_string()),
     }
 }
 
-enum TaskLevels {
-    A,
-    B,
-    C,
-    D,
-}
+fn interactive_mode(contest: &mut atcoder::Contest) {
+    loop {
+        // show the prompt
+        print!("> ");
+        io::stdout().flush().unwrap();
 
-impl FromStr for TaskLevels {
-    type Err = &'static str;
+        let stdin = io::stdin();
+        let mut iterator = stdin.lock().lines();
+        let line = iterator.next().unwrap().unwrap();
+        // throw away second line or later.
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "A" | "a" => Ok(TaskLevels::A),
-            "B" | "b" => Ok(TaskLevels::B),
-            "C" | "c" => Ok(TaskLevels::C),
-            "D" | "d" => Ok(TaskLevels::D),
-            _ => Err("No match"),
+        // TODO
+        let is_continue = match evel_command(contest, line) {
+            Ok(cnt) => cnt,
+            Err(why) => {
+                println!("failed\n{}", why);
+                true
+            }
+        };
+
+        if !is_continue {
+            println!("bye");
+            break;
         }
     }
 }
@@ -153,89 +84,12 @@ fn main() {
     let yaml = load_yaml!("../arguments.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
-    let verbose_level = matches.occurrences_of("verbose");
-    let verbose = Verbose::new(verbose_level);
+    let mut contest = atcoder::Contest::new();
 
-    let cmd = matches.value_of("exec").unwrap_or("./a.out");
-    let abc_number = matches.value_of("number").unwrap();
-
-    let t = value_t!(matches, "level", TaskLevels).unwrap();
-    let task_level = match t {
-        TaskLevels::A => "a",
-        TaskLevels::B => "b",
-        TaskLevels::C => "c",
-        TaskLevels::D => "d",
-    };
-
-    let task_name = &format!("abc{0:<03}", abc_number.parse::<i32>().unwrap());
-    let url = &format!(
-        "https://atcoder.jp/contests/{0}/tasks/{0}_{1}",
-        task_name, task_level
-    );
-
-    verbose.info(&format!("- execution file : {}\n", cmd));
-    verbose.info(&format!("- problem number : {}\n", task_name));
-    verbose.info(&format!("- http request url:\n{}\n", url));
-
-    // for openssl
-    // https://crates.io/crates/openssl-probe
-    openssl_probe::init_ssl_cert_env_vars();
-
-    /*
-     *  request HTTP GET to the url
-     */
-    let mut response = reqwest::get(url).unwrap();
-
-    verbose.info(&format!("- status         : {}\n", response.status()));
-
-    let buffer = response.text().unwrap();
-    verbose.debug(&format!("- html text      :\n{}\n", buffer));
-
-    let task = Task::new(buffer, "ja".to_string());
-    verbose.debug(&format!("- langurage info : {}\n", task.lang));
-
-    let mut exit_code: i32 = 0;
-    if !matches.is_present("test") {
-        verbose.output(&format!(
-            "===== problem =====\n{}\n",
-            task.problem_statement
-        ));
-        verbose.output(&format!("==== io style ====\n{}\n", task.io_style));
-
-        for (i, sample) in task.sample_ios.iter().enumerate() {
-            verbose.output(&format!("=== sample{:<02} ===\n", i));
-            verbose.output(&format!("* inputs\n{}", sample.input));
-            verbose.output(&format!("* outputs\n{}", sample.output));
-        }
-
-        std::process::exit(exit_code);
+    if matches.is_present("interactive") {
+        interactive_mode(&mut contest);
+        return;
     }
 
-    for (i, sample) in task.sample_ios.iter().enumerate() {
-        verbose.output(&format!("--- sample{:<02} ---\n", i));
-
-        let mut process = Command::new(cmd)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-            .ok()
-            .expect("failed to start the program");
-        process
-            .stdin
-            .as_mut()
-            .unwrap()
-            .write(sample.input.as_bytes())
-            .unwrap();
-        let output = process.wait_with_output().unwrap();
-        let result_str = String::from_utf8(output.stdout).unwrap();
-        if result_str == sample.output {
-            verbose.output(&format!("passed!\n"));
-        } else {
-            verbose.output(&format!("failed\n"));
-            verbose.output(&format!("correct answer is\n{}", sample.output));
-            verbose.output(&format!("your answer is \n{}", result_str));
-            exit_code += 1;
-        }
-    }
-    std::process::exit(exit_code);
+    assert!(false, "not yet implemented");
 }

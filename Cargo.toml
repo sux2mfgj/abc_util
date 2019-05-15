@@ -10,3 +10,4 @@ openssl-probe = "0.1.2"
 reqwest = "*"
 scraper = "*"
 clap = {version = "2.33", features = ["yaml"]}
+shrust = "0.0.6"

@@ -6,13 +6,13 @@ args:
     - number:
         short: n
         long: number
-        required: true
+#required: true
         takes_value: true
         help: Sets a number of the ABC like 88, 125, etc.
     - level:
         short: l
         long: level
-        required: true
+#        required: true
         takes_value: true
         possible_values:
             - a
@@ -24,13 +24,17 @@ args:
         short: e
         long: exec
         value_name: FILE
-        help: Sets a execution file with a absolute or relative path. (e.g ./a.out)
+        help: Sets a execution file with a absolute or relative path. (e.g ./a.out).
+    - interactive:
+        short: i
+        long: interactive
+        help: Running with a interactive mode.
     - verbose:
         short: v
         multiple: true
-        help: Sets the level of verbosity
+        help: Sets the level of verbosity.
     - test:
         short: t
         long: test
-        help: run the program with sample input
+        help: run the program with sample input.
 
