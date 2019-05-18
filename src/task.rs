@@ -1,4 +1,6 @@
 use crate::extracter::atcoder;
+use std::process::{Command, Stdio};
+use std::io::Write;
 
 #[derive(Debug, PartialEq)]
 pub struct SampleIO {
@@ -28,10 +30,8 @@ impl Task {
         }
     }
 
-    pub fn complete(&mut self)
-    {
-        if self.problem_statement == None || self.sample_ios == None || self.io_style == None
-        {
+    pub fn complete(&mut self) {
+        if self.problem_statement == None || self.sample_ios == None || self.io_style == None {
             //TODO read data ans set
             atcoder::set_task_info(self);
         }
@@ -40,9 +40,7 @@ impl Task {
     pub fn show(&self) -> bool {
         let p_state = if let Some(statement) = &self.problem_statement {
             statement
-        }
-        else
-        {
+        } else {
             return false;
         };
 
@@ -52,9 +50,7 @@ impl Task {
         println!("-----");
         if let Some(style) = &self.io_style {
             print!("{}", style);
-        }
-        else
-        {
+        } else {
             return false;
         }
         println!("-----");
@@ -65,13 +61,82 @@ impl Task {
                 print!("{}{}", sample.input, sample.output);
                 println!("-----");
             }
-        }
-        else
-        {
+        } else {
             return false;
         }
 
         true
+    }
+
+    // this function returns a failed sample index;
+    pub fn run_test(&self, sample_num: i32, cmd: &String) -> Result<Vec<usize>, String> {
+
+        let mut failed_list = vec![];
+
+        if let Some(samples) = &self.sample_ios {
+            // run with all samples
+            if sample_num == -1 {
+                for (i, sample) in samples.iter().enumerate() {
+                    let mut process = Command::new(cmd)
+                        .stdin(Stdio::piped())
+                        .stdout(Stdio::piped())
+                        .spawn()
+                        .ok()
+                        .expect("failed to start the program");
+                    process
+                        .stdin
+                        .as_mut()
+                        .unwrap()
+                        .write(sample.input.as_bytes())
+                        .unwrap();
+                    println!("--- sample{:<02} ---\n", i);
+
+                    let output = process.wait_with_output().unwrap();
+                    let result_str = String::from_utf8(output.stdout).unwrap();
+                    if result_str == sample.output {
+                        println!("passed!");
+                    } else {
+                        println!("failed");
+                        print!("correct answer is\n{}", sample.output);
+                        print!("your answer is \n{}", result_str);
+                        failed_list.push(i);
+                    }
+                }
+            }
+            else{
+                let index = sample_num as usize;
+                let sample = &samples[index];
+                let mut process = Command::new(cmd)
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .spawn()
+                    .ok()
+                    .expect("failed to start the program");
+                process
+                    .stdin
+                    .as_mut()
+                    .unwrap()
+                    .write(sample.input.as_bytes())
+                    .unwrap();
+
+                let output = process.wait_with_output().unwrap();
+                let result_str = String::from_utf8(output.stdout).unwrap();
+                if result_str == sample.output {
+                    println!("passed!\n");
+                } else {
+                    println!("failed\n");
+                    println!("correct answer is\n{}", sample.output);
+                    println!("your answer is \n{}", result_str);
+                    failed_list.push(index);
+                }
+            }
+
+            Ok(failed_list)
+        }
+        else
+        {
+            Err("cannot find any samples".to_string())
+        }
     }
 }
 

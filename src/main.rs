@@ -31,10 +31,16 @@ mod extracter;
 mod task;
 
 struct ExecInfo {
-    file_name: String,
+    command: String,
+    // -1 : all, 0 : sample0, 1: sapmle1
+    current_sample: i32,
 }
 
-fn eval_command(contest: &mut contest::Contest, exec_info: &mut ExecInfo, command_line: String) -> Result<bool, String> {
+fn eval_command(
+    contest: &mut contest::Contest,
+    exec_info: &mut ExecInfo,
+    command_line: String,
+) -> Result<bool, String> {
     let command: Vec<_> = command_line.split(' ').collect();
     match command[0] {
         "contest_title" | "c" => {
@@ -65,7 +71,7 @@ fn eval_command(contest: &mut contest::Contest, exec_info: &mut ExecInfo, comman
         }
         "show_task" | "s" => {
             if command.len() == 2 {
-                let task_num = command[1].parse::<usize>();
+            let task_num = command[1].parse::<usize>();
                 if let Ok(num) = task_num {
                     contest.current_task_index = num;
                     // TODO
@@ -90,13 +96,28 @@ fn eval_command(contest: &mut contest::Contest, exec_info: &mut ExecInfo, comman
             }
         }
         "exec_file" | "e" => {
-
             if command.len() != 2 {
-                exec_info.file_name = command[1].to_string();
+                exec_info.command = command[1].to_string();
                 Ok(true)
-            }
-            else{
+            } else {
                 Err("exec_file requires a argument.\n.e.g. > exec_file ./a.out".to_string())
+            }
+        }
+        "test" | "t" => {
+            let curren_task = contest.get_task().unwrap();
+            if command.len() == 2
+            {
+                exec_info.current_sample = command[1].parse::<i32>().unwrap();
+            }
+            let failed_list = curren_task.run_test(exec_info.current_sample, &exec_info.command);
+
+            match failed_list {
+                Ok(_) => {
+                    Ok(true)
+                }
+                Err(text) =>{
+                    Err(text)
+                }
             }
         }
         "bye" | "b" => Ok(false),
@@ -106,10 +127,20 @@ fn eval_command(contest: &mut contest::Contest, exec_info: &mut ExecInfo, comman
 
 //fn interactive_mode<R: BufRead>(read: &mut R) {
 fn interactive_mode(contest: &mut contest::Contest) {
-    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
+    let mut exec_info = ExecInfo {
+        command: "./a.out".to_string(),
+        current_sample: -1
+    };
     loop {
         // show the prompt
-        print!("> ");
+        if let Some(title) = &contest.title {
+            print!("consest: {}, task: {}> ", title, contest.current_task_index);
+        }
+        else{
+            println!("run contest_title command first.");
+            println!("e.g. > contest_title agc021");
+            print!("> ");
+        }
         io::stdout().flush().unwrap();
 
         let stdin = io::stdin();
@@ -160,7 +191,9 @@ mod tests {
     fn eval_get_title_failed() {
         let mut contest = contest::Contest::new();
         let line = "c\n".to_string();
-    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
+        let mut exec_info = ExecInfo {
+            command: "./a.out".to_string(),
+        };
         let result = eval_command(&mut contest, &mut exec_info, line);
 
         match result {
@@ -175,7 +208,9 @@ mod tests {
     fn eval_set_title() {
         let mut contest = contest::Contest::new();
         let line = "c agc012".to_string();
-    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
+        let mut exec_info = ExecInfo {
+            command: "./a.out".to_string(),
+        };
         let result = eval_command(&mut contest, &mut exec_info, line);
 
         match result {
@@ -186,18 +221,22 @@ mod tests {
         }
     }
 
-#[test]
+    #[test]
     fn eval_show_task() {
         let mut contest = contest::Contest::new();
-    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
+        let mut exec_info = ExecInfo {
+            command: "./a.out".to_string(),
+        };
         let line = "c agc012".to_string();
         eval_command(&mut contest, &mut exec_info, line).unwrap();
         eval_command(&mut contest, &mut exec_info, "s".to_string()).unwrap();
     }
 
-#[test]
+    #[test]
     fn eval_exit() {
-    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
+        let mut exec_info = ExecInfo {
+            command: "./a.out".to_string(),
+        };
         let mut contest = contest::Contest::new();
         let line = "bye".to_string();
         eval_command(&mut contest, &mut exec_info, line).unwrap();

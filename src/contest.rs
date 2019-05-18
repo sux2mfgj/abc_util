@@ -29,6 +29,7 @@ impl Contest {
                 task_result.push(task::Task::new(task.title, task.link, lang_ja));
             }
 
+            self.title = Some(title);
             self.tasks = Some(task_result);
             true
         } else {
@@ -38,15 +39,12 @@ impl Contest {
 
     pub fn get_task(&mut self) -> Option<&task::Task> {
         if let Some(task_vec) = &mut self.tasks {
-            if self.current_task_index >= task_vec.len()
-            {
+            if self.current_task_index >= task_vec.len() {
                 self.current_task_index = 0;
                 None
-            }
-            else
-            {
+            } else {
                 task_vec[self.current_task_index].complete();
-                let ret_task :&task::Task = &task_vec[self.current_task_index];
+                let ret_task: &task::Task = &task_vec[self.current_task_index];
                 Some(&ret_task)
             }
         } else {
