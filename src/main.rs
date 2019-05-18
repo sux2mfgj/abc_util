@@ -5,95 +5,6 @@ use std::io::{self, BufRead, Write};
 extern crate clap;
 use clap::App;
 
-mod contest;
-mod task;
-
-use contest as atcoder;
-
-fn evel_command(contest: &mut atcoder::Contest, command_line: String) -> Result<bool, String> {
-    let command: Vec<_> = command_line.split(' ').collect();
-    match command[0] {
-        "contest_name" | "c" => {
-            if command.len() != 2 {
-                match &contest.name {
-                    Some(name) => {
-                        println!("{}", name);
-                        Ok(true)
-                    }
-                    None => Err(
-                        "contest_name requires a argument.\ne.g. > contest_name abc125".to_string(),
-                    ),
-                }
-            } else {
-                println!("setting...");
-
-                let path = &format!("/contests/{0}/tasks", command[1]);
-                let domain = "atcoder.jp".to_string();
-
-                if let Some(tasks) = contest.set_name_and_get_tasks(&domain, path) {
-                    println!("titles are ");
-                    for task in tasks {
-                        println!("{}", task);
-                    }
-                    contest.name = Some(command[1].to_string());
-                    Ok(true)
-                } else {
-                    Err(format!("the argument `{}` is invalid", command[1]).to_string())
-                }
-            }
-        }
-        "show" | "s" => {
-            if command.len() != 2 {
-                if None == contest.name {
-                    Err("set the contest_name first".to_string())
-                }
-                else
-                {
-                    Err("not yet implemented".to_string())
-                }
-            }
-            else
-            {
-                Err("not yet implemented".to_string())
-            }
-        }
-        "help" | "h" => {
-            assert!(false, "not yet implemented");
-            Err("not yet implemented".to_string())
-        }
-        "exit" => Ok(false),
-        _ => Err("invalid command".to_string()),
-    }
-}
-
-fn interactive_mode(contest: &mut atcoder::Contest) {
-    loop {
-        // show the prompt
-        print!("> ");
-        io::stdout().flush().unwrap();
-
-        let stdin = io::stdin();
-        let mut iterator = stdin.lock().lines();
-        let line = iterator.next().unwrap().unwrap();
-        // throw away second line or later.
-
-        // TODO
-        let is_continue = match evel_command(contest, line) {
-            Ok(cnt) => cnt,
-            Err(why) => {
-                println!("failed\n{}", why);
-                true
-            }
-        };
-
-        if !is_continue {
-            println!("bye");
-            break;
-        }
-    }
-}
-
-
 fn main() {
     /*
      * parse the command line arugmnet
@@ -119,7 +30,11 @@ mod contest;
 mod extracter;
 mod task;
 
-fn eval_command(contest: &mut contest::Contest, command_line: String) -> Result<bool, String> {
+struct ExecInfo {
+    file_name: String,
+}
+
+fn eval_command(contest: &mut contest::Contest, exec_info: &mut ExecInfo, command_line: String) -> Result<bool, String> {
     let command: Vec<_> = command_line.split(' ').collect();
     match command[0] {
         "contest_title" | "c" => {
@@ -174,21 +89,24 @@ fn eval_command(contest: &mut contest::Contest, command_line: String) -> Result<
                 }
             }
         }
-        /*
-        "show" | "s" => {
-            Err("not yet implemented".to_string())
+        "exec_file" | "e" => {
+
+            if command.len() != 2 {
+                exec_info.file_name = command[1].to_string();
+                Ok(true)
+            }
+            else{
+                Err("exec_file requires a argument.\n.e.g. > exec_file ./a.out".to_string())
+            }
         }
-        "help" | "h" => {
-            Err("not yet implemented".to_string())
-        }
-        */
-        "exit" => Ok(false),
+        "bye" | "b" => Ok(false),
         _ => Err("invalid command".to_string()),
     }
 }
 
 //fn interactive_mode<R: BufRead>(read: &mut R) {
 fn interactive_mode(contest: &mut contest::Contest) {
+    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
     loop {
         // show the prompt
         print!("> ");
@@ -200,7 +118,7 @@ fn interactive_mode(contest: &mut contest::Contest) {
         // throw away second line or later.
 
         // TODO
-        let is_continue = match eval_command(contest, line) {
+        let is_continue = match eval_command(contest, &mut exec_info, line) {
             Ok(cnt) => cnt,
             Err(why) => {
                 println!("failed\n{}", why);
@@ -242,7 +160,8 @@ mod tests {
     fn eval_get_title_failed() {
         let mut contest = contest::Contest::new();
         let line = "c\n".to_string();
-        let result = eval_command(&mut contest, line);
+    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
+        let result = eval_command(&mut contest, &mut exec_info, line);
 
         match result {
             Ok(_) => {
@@ -256,7 +175,8 @@ mod tests {
     fn eval_set_title() {
         let mut contest = contest::Contest::new();
         let line = "c agc012".to_string();
-        let result = eval_command(&mut contest, line);
+    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
+        let result = eval_command(&mut contest, &mut exec_info, line);
 
         match result {
             Ok(_) => {}
@@ -269,15 +189,17 @@ mod tests {
 #[test]
     fn eval_show_task() {
         let mut contest = contest::Contest::new();
+    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
         let line = "c agc012".to_string();
-        eval_command(&mut contest, line).unwrap();
-        eval_command(&mut contest, "s".to_string()).unwrap();
+        eval_command(&mut contest, &mut exec_info, line).unwrap();
+        eval_command(&mut contest, &mut exec_info, "s".to_string()).unwrap();
     }
 
 #[test]
     fn eval_exit() {
+    let mut exec_info = ExecInfo { file_name: "./a.out".to_string() };
         let mut contest = contest::Contest::new();
-        let line = "exit".to_string();
-        eval_command(&mut contest, line).unwrap();
+        let line = "bye".to_string();
+        eval_command(&mut contest, &mut exec_info, line).unwrap();
     }
 }
