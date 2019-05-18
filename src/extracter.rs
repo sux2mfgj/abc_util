@@ -1,17 +1,21 @@
-
-mod atcoder {
+pub mod atcoder {
     use reqwest;
 
     use scraper::{Html, Selector};
 
-#[derive(Debug, PartialEq)]
-    pub struct TaskData {
-        pub title: String,
-        pub link: String
+    #[derive(Debug, Copy, Clone, PartialEq)]
+    pub enum Lang {
+        Ja,
+        En,
     }
 
-    pub fn get_tasks(domain: &String, path: &String) -> Option<Vec<TaskData>>
-    {
+    #[derive(Debug, PartialEq)]
+    pub struct TaskData {
+        pub title: String,
+        pub link: String,
+    }
+
+    pub fn get_tasks(domain: &String, path: &String) -> Option<Vec<TaskData>> {
         println!("{}", domain);
         println!("{}", path);
         let url = &format!("https://{0}{1}", domain, path);
@@ -20,7 +24,7 @@ mod atcoder {
         if let Ok(mut response) = reqwest::get(url) {
             let html_body = response.text().unwrap();
             let document = Html::parse_document(&html_body);
-            println!("{:?}", html_body);
+            //println!("{:?}", html_body);
 
             // TODO refactoring
             let task_sel = Selector::parse("td").unwrap();
@@ -37,7 +41,7 @@ mod atcoder {
                 .map(|item| item.inner_html())
                 .collect();
 
-            if links.len() == 0 || names.len() == 0{
+            if links.len() == 0 || names.len() == 0 {
                 println!("cannot found any tasks in the link.");
                 println!("{0:?} {1:?}", links, names);
                 None
@@ -45,17 +49,15 @@ mod atcoder {
                 let mut result: Vec<TaskData> = vec![];
                 for i in 0..links.len() {
                     if i % 2 == 1 {
-                        result.push(TaskData{
+                        result.push(TaskData {
                             title: format!("{}: {}", names[i - 1].clone(), names[i]).to_string(),
                             link: format!("{}{}", domain, links[i].to_string()),
-                                });
+                        });
                     }
                 }
                 Some(result)
             }
-        }
-        else
-        {
+        } else {
             None
         }
     }
@@ -76,42 +78,42 @@ mod tests {
         assert!(false)
     }
 
-#[test]
+    #[test]
     fn get_tasks() {
         //https://atcoder.jp/contests/abc125/
         let domain = "atcoder.jp".to_string();
         let path = "/contests/abc125/tasks".to_string();
 
-        if let Some(tasks) = atcoder::get_tasks(&domain, &path)
-        {
+        if let Some(tasks) = atcoder::get_tasks(&domain, &path) {
             println!("{:?}", tasks);
 
-            assert_eq!(tasks, vec![
-                    atcoder::TaskData{
+            assert_eq!(
+                tasks,
+                vec![
+                    atcoder::TaskData {
                         title: "A: Biscuit Generator".to_string(),
                         link: "atcoder.jp/contests/abc125/tasks/abc125_a".to_string(),
                     },
-                    atcoder::TaskData{
+                    atcoder::TaskData {
                         title: "B: Resale".to_string(),
                         link: "atcoder.jp/contests/abc125/tasks/abc125_b".to_string(),
                     },
-                    atcoder::TaskData{
+                    atcoder::TaskData {
                         title: "C: GCD on Blackboard".to_string(),
                         link: "atcoder.jp/contests/abc125/tasks/abc125_c".to_string(),
                     },
-                    atcoder::TaskData{
+                    atcoder::TaskData {
                         title: "D: Flipping Signs".to_string(),
                         link: "atcoder.jp/contests/abc125/tasks/abc125_d".to_string(),
                     },
-            ]);
-        }
-        else
-        {
+                ]
+            );
+        } else {
             panic!("failed to get the tasks");
         }
     }
 
-#[test]
+    #[test]
     fn get_tasks_invalid_url() {
         //https://atcoder.jp/contests/abc125/
         let domain = "atcoder.jp".to_string();
@@ -121,4 +123,6 @@ mod tests {
 
         assert_eq!(result, None);
     }
+
+    //TODO add more tests for older contests.
 }
