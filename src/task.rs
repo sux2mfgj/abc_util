@@ -1,16 +1,19 @@
 use crate::extracter::atcoder;
 
 #[derive(Debug, PartialEq)]
-struct SampleIO {}
+pub struct SampleIO {
+    pub input: String,
+    pub output: String,
+}
 
 #[derive(Debug, PartialEq)]
 pub struct Task {
     pub title: String,
     pub problem_statement: Option<String>,
-    sample_ios: Option<Vec<SampleIO>>,
+    pub sample_ios: Option<Vec<SampleIO>>,
     pub io_style: Option<String>,
     lang: atcoder::Lang,
-    url: String,
+    pub url: String,
 }
 
 impl Task {
@@ -23,6 +26,52 @@ impl Task {
             lang: lang,
             url: url,
         }
+    }
+
+    pub fn complete(&mut self)
+    {
+        if self.problem_statement == None || self.sample_ios == None || self.io_style == None
+        {
+            //TODO read data ans set
+            atcoder::set_task_info(self);
+        }
+    }
+
+    pub fn show(&self) -> bool {
+        let p_state = if let Some(statement) = &self.problem_statement {
+            statement
+        }
+        else
+        {
+            return false;
+        };
+
+        println!("title:\n{}", self.title);
+        println!("-----");
+        println!("statement:\n{}", p_state);
+        println!("-----");
+        if let Some(style) = &self.io_style {
+            print!("{}", style);
+        }
+        else
+        {
+            return false;
+        }
+        println!("-----");
+
+        if let Some(sample_vec) = &self.sample_ios {
+            println!("sample I/Os:");
+            for sample in sample_vec {
+                print!("{}{}", sample.input, sample.output);
+                println!("-----");
+            }
+        }
+        else
+        {
+            return false;
+        }
+
+        true
     }
 }
 
@@ -50,22 +99,22 @@ mod tests {
         let answer = vec![
             Task::new(
                 "A: Biscuit Generator".to_string(),
-                "atcoder.jp/contests/abc125/tasks/abc125_a".to_string(),
+                "https://atcoder.jp/contests/abc125/tasks/abc125_a".to_string(),
                 atcoder::Lang::Ja,
             ),
             Task::new(
                 "B: Resale".to_string(),
-                "atcoder.jp/contests/abc125/tasks/abc125_b".to_string(),
+                "https://atcoder.jp/contests/abc125/tasks/abc125_b".to_string(),
                 atcoder::Lang::Ja,
             ),
             Task::new(
                 "C: GCD on Blackboard".to_string(),
-                "atcoder.jp/contests/abc125/tasks/abc125_c".to_string(),
+                "https://atcoder.jp/contests/abc125/tasks/abc125_c".to_string(),
                 atcoder::Lang::Ja,
             ),
             Task::new(
                 "D: Flipping Signs".to_string(),
-                "atcoder.jp/contests/abc125/tasks/abc125_d".to_string(),
+                "https://atcoder.jp/contests/abc125/tasks/abc125_d".to_string(),
                 atcoder::Lang::Ja,
             ),
         ];
