@@ -10,9 +10,9 @@ pub struct SampleIO {
 #[derive(Debug)]
 pub struct Task {
     pub title: String,
-    pub problem_statement: String,
-    pub sample_ios: Vec<SampleIO>,
-    pub io_style: String,
+    pub problem_statement: Option<String>,
+    pub sample_ios: Option<Vec<SampleIO>>,
+    pub io_style: Option<String>,
     lang: String,
     url: String,
 }
@@ -27,9 +27,9 @@ impl Task {
 
         Task {
             title: title,
-            problem_statement: "".to_string(),
-            sample_ios: vec![],
-            io_style: "".to_string(),
+            problem_statement: None,
+            sample_ios: None,
+            io_style: None,
             lang: lang,
             url: url.to_string(),
         }

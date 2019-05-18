@@ -5,10 +5,11 @@ use scraper::{Html, Selector};
 
 use crate::task;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Contest {
     pub name: Option<String>,
     pub tasks: Vec<task::Task>,
+    pub current_task_index: usize,
 }
 
 impl Contest {
@@ -16,6 +17,7 @@ impl Contest {
         Contest {
             name: None,
             tasks: vec![],
+            current_task_index: 0,
         }
     }
 
@@ -66,5 +68,19 @@ impl Contest {
         } else {
             None
         }
+    }
+
+    pub fn show_current_task_info(&mut self)
+    {
+        if None == self.name {
+            //Err("set the contest_name first".to_string())
+        }
+
+        if self.tasks.len() == 0 {
+            //Err("set the contest_name first".to_string())
+        }
+
+        let current = &self.tasks[self.current_task_index];
+
     }
 }

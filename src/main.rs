@@ -1,3 +1,4 @@
+/*
 use std::io::{self, BufRead, Write};
 
 #[macro_use]
@@ -41,7 +42,22 @@ fn evel_command(contest: &mut atcoder::Contest, command_line: String) -> Result<
                 }
             }
         }
-        "help" => {
+        "show" | "s" => {
+            if command.len() != 2 {
+                if None == contest.name {
+                    Err("set the contest_name first".to_string())
+                }
+                else
+                {
+                    Err("not yet implemented".to_string())
+                }
+            }
+            else
+            {
+                Err("not yet implemented".to_string())
+            }
+        }
+        "help" | "h" => {
             assert!(false, "not yet implemented");
             Err("not yet implemented".to_string())
         }
@@ -77,6 +93,7 @@ fn interactive_mode(contest: &mut atcoder::Contest) {
     }
 }
 
+
 fn main() {
     /*
      * parse the command line arugmnet
@@ -92,4 +109,11 @@ fn main() {
     }
 
     assert!(false, "not yet implemented");
+}
+*/
+
+mod extracter;
+
+fn main() {
+
 }
