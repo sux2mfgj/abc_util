@@ -69,8 +69,25 @@ fn eval_command(
                 }
             }
         }
-        "show_task" | "s" => {
+        "task" | "t" => {
             if command.len() == 2 {
+                if let Ok(task_name) = command[1].parse::<char>() {
+                    println!("{}", task_name);
+                    if task_name.is_lowercase() 
+                    {
+                        contest.current_task_index = task_name as usize - 'a' as usize;
+                    }
+                    else
+                    {
+                        contest.current_task_index = task_name as usize - 'A' as usize;
+                    }
+                    Ok(true)
+                }
+                else
+                {
+                    Err("invalied argument.".to_string())
+                }
+            /*
             let task_num = command[1].parse::<usize>();
                 if let Ok(num) = task_num {
                     contest.current_task_index = num;
@@ -85,6 +102,7 @@ fn eval_command(
                 } else {
                     Err("invalied argument".to_string())
                 }
+                */
             } else {
                 if let Some(t) = contest.get_task() {
                     // TODO
@@ -103,7 +121,7 @@ fn eval_command(
                 Err("exec_file requires a argument.\n.e.g. > exec_file ./a.out".to_string())
             }
         }
-        "test" | "t" => {
+        "run" | "r" => {
             let curren_task = contest.get_task().unwrap();
             if command.len() == 2
             {
@@ -134,7 +152,7 @@ fn interactive_mode(contest: &mut contest::Contest) {
     loop {
         // show the prompt
         if let Some(title) = &contest.title {
-            print!("consest: {}, task: {}> ", title, contest.current_task_index);
+            print!("consest: {}, task: {}> ", title, (contest.current_task_index as u8 + 'A' as u8) as char);
         }
         else{
             println!("run contest_title command first.");
