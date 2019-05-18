@@ -1,8 +1,8 @@
 pub mod atcoder {
     use reqwest;
 
-    use scraper::{Html, Selector};
     use scraper::element_ref::ElementRef;
+    use scraper::{Html, Selector};
 
     use crate::task;
 
@@ -66,9 +66,7 @@ pub mod atcoder {
         }
     }
 
-    pub fn set_task_info(task: &mut task::Task) -> bool
-    {
-
+    pub fn set_task_info(task: &mut task::Task) -> bool {
         let mut response = reqwest::get(&task.url).unwrap();
         let html_body = response.text().unwrap();
 
@@ -202,7 +200,7 @@ mod tests {
 
     //TODO add more tests for older contests.
 
-#[test]
+    #[test]
     fn set_task_info() {
         let url = "https://atcoder.jp/contests/abc125/tasks/abc125_a".to_string();
         // TODO

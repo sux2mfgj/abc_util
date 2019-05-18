@@ -73,36 +73,15 @@ fn eval_command(
             if command.len() == 2 {
                 if let Ok(task_name) = command[1].parse::<char>() {
                     println!("{}", task_name);
-                    if task_name.is_lowercase() 
-                    {
+                    if task_name.is_lowercase() {
                         contest.current_task_index = task_name as usize - 'a' as usize;
-                    }
-                    else
-                    {
+                    } else {
                         contest.current_task_index = task_name as usize - 'A' as usize;
                     }
                     Ok(true)
-                }
-                else
-                {
+                } else {
                     Err("invalied argument.".to_string())
                 }
-            /*
-            let task_num = command[1].parse::<usize>();
-                if let Ok(num) = task_num {
-                    contest.current_task_index = num;
-                    // TODO
-                    if let Some(t) = contest.get_task() {
-                        // TODO
-                        let show_ret = t.show();
-                        Ok(true)
-                    } else {
-                        Err("TODO".to_string())
-                    }
-                } else {
-                    Err("invalied argument".to_string())
-                }
-                */
             } else {
                 if let Some(t) = contest.get_task() {
                     // TODO
@@ -123,19 +102,14 @@ fn eval_command(
         }
         "run" | "r" => {
             let curren_task = contest.get_task().unwrap();
-            if command.len() == 2
-            {
+            if command.len() == 2 {
                 exec_info.current_sample = command[1].parse::<i32>().unwrap();
             }
             let failed_list = curren_task.run_test(exec_info.current_sample, &exec_info.command);
 
             match failed_list {
-                Ok(_) => {
-                    Ok(true)
-                }
-                Err(text) =>{
-                    Err(text)
-                }
+                Ok(_) => Ok(true),
+                Err(text) => Err(text),
             }
         }
         "bye" | "b" => Ok(false),
@@ -147,14 +121,17 @@ fn eval_command(
 fn interactive_mode(contest: &mut contest::Contest) {
     let mut exec_info = ExecInfo {
         command: "./a.out".to_string(),
-        current_sample: -1
+        current_sample: -1,
     };
     loop {
         // show the prompt
         if let Some(title) = &contest.title {
-            print!("consest: {}, task: {}> ", title, (contest.current_task_index as u8 + 'A' as u8) as char);
-        }
-        else{
+            print!(
+                "consest: {}, task: {}> ",
+                title,
+                (contest.current_task_index as u8 + 'A' as u8) as char
+            );
+        } else {
             println!("run contest_title command first.");
             println!("e.g. > contest_title agc021");
             print!("> ");
